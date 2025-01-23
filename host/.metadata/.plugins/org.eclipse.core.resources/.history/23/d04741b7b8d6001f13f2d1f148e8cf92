@@ -1,0 +1,10 @@
+#include<stdio.h>
+
+int main(void)
+{
+	print("Привіт світ\n");
+
+	printf("Натисни 'Enter' для виходу з проги\n");
+	getchar();
+	return 0;
+}
