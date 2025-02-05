@@ -9,15 +9,13 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <bits/stdc++.h>
-
-#include <openssl/sha.h>
 
 // Header: /opt/vc/include/bcm_host.h
 // Library: /opt/vc/lib/libbcm_host.so
+#include <bcm_host.h>
+#include <openssl/sha.h>
 
-// ----------------------------------------------------------------------------------------------------
-
+// Функція для хешування даних за допомогою SHA-256
 std::string SHA256Hash(const std::string& data) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256(reinterpret_cast<const unsigned char*>(data.c_str()), data.size(), hash);
@@ -287,6 +285,25 @@ std::string ReadMailboxMACAddress()
 }
 
 // ----------------------------------------------------------------------------------------------------
+
+std::string ReadOTPDump()
+{
+    bcm_host_init();
+    
+    char buffer[1024] = { 0 };
+
+    if (vc_gencmd(buffer, sizeof(buffer), "otp_dump") != 0)
+    {
+        bcm_host_deinit();
+        throw std::runtime_error("Could not execute `otp_dump` command.");
+    }
+    
+    bcm_host_deinit();
+    
+    std::string otpDump = buffer;
+
+    return otpDump;
+}
 
 // ----------------------------------------------------------------------------------------------------
 
