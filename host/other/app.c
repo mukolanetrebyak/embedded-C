@@ -16,4 +16,5 @@ printf("Node Name = %s\n", buf1.nodename);
 printf("Version = %s\n", buf1.version); 
 printf("Release = %s\n", buf1.release); 
 printf("Machine = %s\n", buf1.machine); 
+//printf("Розмір типу даних long %u\n", sizeof(long));
 } 
