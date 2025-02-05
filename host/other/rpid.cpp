@@ -9,12 +9,25 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <bits/stdc++.h>
+
+#include <openssl/sha.h>
 
 // Header: /opt/vc/include/bcm_host.h
 // Library: /opt/vc/lib/libbcm_host.so
-#include <bcm_host.h>
 
 // ----------------------------------------------------------------------------------------------------
+
+std::string SHA256Hash(const std::string& data) {
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256(reinterpret_cast<const unsigned char*>(data.c_str()), data.size(), hash);
+
+    std::stringstream ss;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    }
+    return ss.str();
+}
 
 std::string ReadCPUInfo()
 {
@@ -275,55 +288,24 @@ std::string ReadMailboxMACAddress()
 
 // ----------------------------------------------------------------------------------------------------
 
-std::string ReadOTPDump()
-{
-    bcm_host_init();
-    
-    char buffer[1024] = { 0 };
-
-    if (vc_gencmd(buffer, sizeof(buffer), "otp_dump") != 0)
-    {
-        bcm_host_deinit();
-        throw std::runtime_error("Could not execute `otp_dump` command.");
-    }
-    
-    bcm_host_deinit();
-    
-    std::string otpDump = buffer;
-
-    return otpDump;
-}
-
 // ----------------------------------------------------------------------------------------------------
 
-int main()
-{
-    std::cout << "-------------------- CPU Info: $ cat /proc/cpuinfo --------------------" << std::endl;
-    std::cout << ReadCPUInfo() << std::endl;
-    
-    std::cout << "-------------------- Board Model: $ cat /sys/firmware/devicetree/base/model --------------------" << std::endl;
-    std::cout << ReadSysBoardModel() << std::endl;
-    
-    std::cout << "-------------------- Board Serial: $ cat /sys/firmware/devicetree/base/serial-number --------------------" << std::endl;
-    std::cout << ReadSysBoardSerial() << std::endl;
-    
-    std::cout << "-------------------- MAC Address: $ cat /sys/class/net/eth0/address --------------------" << std::endl;
-    std::cout << ReadSysMACAddress() << std::endl;
-    
-    std::cout << "-------------------- Board Model: $ /opt/vc/bin/vcmailbox 0x10001 0x4 0x0 0x0 --------------------" << std::endl;
-    std::cout << ReadMailboxBoardModel() << std::endl;
-    
-    std::cout << "-------------------- Board Revision: $ /opt/vc/bin/vcmailbox 0x10002 0x4 0x0 0x0 --------------------" << std::endl;
-    std::cout << ReadMailboxBoardRevision() << std::endl;
-    
-    std::cout << "-------------------- Board Serial: $ /opt/vc/bin/vcmailbox 0x10004 0x8 0x0 0x0 0x0 --------------------" << std::endl;
-    std::cout << ReadMailboxBoardSerial() << std::endl;
-    
-    std::cout << "-------------------- MAC Address: $ /opt/vc/bin/vcmailbox 0x10003 0x8 0x0 0x0 0x0 --------------------" << std::endl;
-    std::cout << ReadMailboxMACAddress() << std::endl;
-        
-    std::cout << "-------------------- OTP: vcgencmd otp_dump --------------------" << std::endl;
-    std::cout << ReadOTPDump() << std::endl;
+int main() {
+    std::stringstream combinedData;
+
+    combinedData << ReadCPUInfo();
+    combinedData << ReadSysBoardModel();
+    combinedData << ReadSysBoardSerial();
+    combinedData << ReadSysMACAddress();
+    combinedData << ReadMailboxBoardModel();
+    combinedData << ReadMailboxBoardRevision();
+    combinedData << ReadMailboxBoardSerial();
+    combinedData << ReadMailboxMACAddress();
+
+    std::string hashedInfo = SHA256Hash(combinedData.str());
+
+    std::cout << "-------------------- Hashed System Info (SHA-256) --------------------" << std::endl;
+    std::cout << hashedInfo << std::endl;
 
     return 0;
 }
